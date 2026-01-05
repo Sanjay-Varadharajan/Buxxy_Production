@@ -15,23 +15,30 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex){
-        Map<String,String> fieldErrors=new HashMap<>();
+    public ResponseEntity<ApiErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> fieldErrors = new HashMap<>();
 
         ex.getBindingResult()
                 .getFieldErrors()
-                .forEach(error->fieldErrors.put(error.getField(), error.getDefaultMessage()));
+                .forEach(error ->
+                        fieldErrors.put(error.getField(), error.getDefaultMessage())
+                );
 
-
-        ApiErrorResponse response=new ApiErrorResponse(
-                "VALIDATION FAILED",
-                "INPUT VALIDATION FAILED",
+        ApiErrorResponse response = new ApiErrorResponse(
+                "VALIDATION_FAILED",
+                "Input validation failed",
                 fieldErrors,
                 LocalDateTime.now()
         );
 
-        return ResponseEntity.status(ex.getStatusCode()).body(response);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(response);
     }
+
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiErrorResponse> handleApiException(ApiException apiEx){
