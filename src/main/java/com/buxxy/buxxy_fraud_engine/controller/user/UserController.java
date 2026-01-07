@@ -1,28 +1,42 @@
 package com.buxxy.buxxy_fraud_engine.controller.user;
 
 import com.buxxy.buxxy_fraud_engine.dto.user.UserResponseDTO;
+import com.buxxy.buxxy_fraud_engine.dto.user.UserUpdateDto;
 import com.buxxy.buxxy_fraud_engine.service.user.UserService;
+import com.fasterxml.classmate.members.RawField;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
 @RestController
 @RequestMapping("api/user")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
+
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/profile")
     public ResponseEntity<UserResponseDTO> viewProfile(Principal principal){
-        return userService.viewProfile(principal);
+        UserResponseDTO responseDTO=userService.viewProfile(principal);
+        return ResponseEntity.ok(responseDTO);
     }
+
+    @PutMapping("/update/profile")
+    public ResponseEntity<UserUpdateDto> updateProfile(@RequestBody @Valid UserUpdateDto userUpdateDto, Principal principal){
+        UserUpdateDto updateProfile =  userService.updateProfile(userUpdateDto,principal);
+        return ResponseEntity.ok(updateProfile);
+    }
+
+    @PatchMapping("/deactivate")
+    public ResponseEntity<Void> deActivate(Principal principal){
+        userService.deActivate(principal);
+        return ResponseEntity.noContent().build();
+    }
+
 }
