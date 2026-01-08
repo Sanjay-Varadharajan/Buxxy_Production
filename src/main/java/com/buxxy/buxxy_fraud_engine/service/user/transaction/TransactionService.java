@@ -5,6 +5,7 @@ import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import com.buxxy.buxxy_fraud_engine.model.User;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

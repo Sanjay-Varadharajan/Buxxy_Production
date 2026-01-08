@@ -8,8 +8,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -23,6 +26,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Getter
 @Setter
+@EntityListeners(AuditingEntityListener.class)
 public class FraudRules {
 
     @Id
@@ -36,6 +40,12 @@ public class FraudRules {
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal threshold;
 
-    private boolean inActive;
+    private boolean isActive=true;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime ruleAddedOn;
+
+    private LocalDateTime ruleUpdatedOn;
 
 }

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -22,18 +23,21 @@ public class UserController {
 
 
     @GetMapping("/profile")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserResponseDTO> viewProfile(Principal principal){
         UserResponseDTO responseDTO=userService.viewProfile(principal);
         return ResponseEntity.ok(responseDTO);
     }
 
     @PutMapping("/update/profile")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserUpdateDto> updateProfile(@RequestBody @Valid UserUpdateDto userUpdateDto, Principal principal){
         UserUpdateDto updateProfile =  userService.updateProfile(userUpdateDto,principal);
         return ResponseEntity.ok(updateProfile);
     }
 
     @PatchMapping("/deactivate")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deActivate(Principal principal){
         userService.deActivate(principal);
         return ResponseEntity.noContent().build();

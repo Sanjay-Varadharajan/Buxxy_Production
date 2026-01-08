@@ -6,21 +6,24 @@ import com.buxxy.buxxy_fraud_engine.exceptions.UserNotFoundException;
 import com.buxxy.buxxy_fraud_engine.model.User;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
 
     private final UserRepository userRepository;
 
 
+
+    @Transactional(readOnly = true)
     public UserResponseDTO viewProfile(Principal principal) {
         User loggedInUser = userRepository
                 .findByUserMailAndUserActiveTrue(principal.getName())
