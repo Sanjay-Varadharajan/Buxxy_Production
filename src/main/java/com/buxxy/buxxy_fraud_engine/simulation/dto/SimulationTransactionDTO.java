@@ -1,5 +1,7 @@
 package com.buxxy.buxxy_fraud_engine.simulation.dto;
 
+import com.buxxy.buxxy_fraud_engine.enums.Decision;
+import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.simulation.enums.SimulationScenario;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -21,6 +23,9 @@ public class SimulationTransactionDTO {
     @NotNull(message = "User ID is required")
     private Long userId;
 
+    private int transactionId;
+
+
     @NotNull(message = "Transaction amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal transactionAmount;
@@ -30,9 +35,15 @@ public class SimulationTransactionDTO {
 
     private LocalDateTime transactionOn;
 
+    private TransactionStatus transactionStatus;
+
     private String channel;
 
+    private String message;
+
     private String deviceId;
+
+    private Decision transactionDecision;
 
     private boolean simulated = true;
 

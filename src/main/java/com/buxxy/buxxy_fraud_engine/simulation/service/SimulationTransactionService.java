@@ -1,10 +1,15 @@
 package com.buxxy.buxxy_fraud_engine.simulation.service;
 
 import com.buxxy.buxxy_fraud_engine.dto.transaction.TransactionResponseDTO;
+import com.buxxy.buxxy_fraud_engine.enums.Decision;
+import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import com.buxxy.buxxy_fraud_engine.model.User;
+import com.buxxy.buxxy_fraud_engine.otp.EmailService;
+import com.buxxy.buxxy_fraud_engine.otp.OtpService;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
+import com.buxxy.buxxy_fraud_engine.service.engine.fruadcontrol.FraudControlService;
 import com.buxxy.buxxy_fraud_engine.simulation.dto.SimulationTransactionDTO;
 import com.buxxy.buxxy_fraud_engine.simulation.enums.SimulationScenario;
 import com.buxxy.buxxy_fraud_engine.simulation.utils.SimulationUtils;
@@ -22,13 +27,12 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class SimulationTransactionService {
 
-
     private final TransactionRepository transactionRepository;
-
-
+    private final FraudControlService fraudControlService;
     private final UserRepository userRepository;
-
     private final SimulationUtils simulationUtils;
+    private final OtpService otpService;
+    private final EmailService emailService;
 
     private final Random random = new Random();
 
@@ -74,7 +78,36 @@ public class SimulationTransactionService {
         transaction.setTransactionOn(transactionDTO.getTransactionOn() != null
                 ? transactionDTO.getTransactionOn()
                 : java.time.LocalDateTime.now());
-        transactionRepository.save(transaction);
+
+        transaction.setTransactionStatus(TransactionStatus.PENDING);
+
+        var decision=fraudControlService.fraudControl(transaction);
+        transactionDTO.setTransactionDecision(decision);
+
+        if (decision== Decision.BLOCK){
+            transaction.setTransactionStatus(TransactionStatus.BLOCKED);
+            transactionRepository.save(transaction);
+            return transactionDTO;
+        }
+
+        else if (decision==Decision.ALLOW){
+            transaction.setTransactionStatus(TransactionStatus.APPROVED);
+            transactionRepository.save(transaction);
+            return transactionDTO;
+
+        }
+        else if(decision==Decision.STEP_UP){
+            transactionRepository.save(transaction);
+
+            String otpValue=otpService.generateAndSaveOtp(transaction,loggedInUser);
+            emailService.sendOtp(loggedInUser.getUserMail(),otpValue);
+            transactionDTO.setTransactionId(transactionDTO.getTransactionId());
+
+            transactionDTO.setTransactionStatus(TransactionStatus.PENDING);
+            transactionDTO.setTransactionDecision(Decision.STEP_UP);
+            transactionDTO.setMessage("OTP sent to email. Verify to complete transaction.");
+            return transactionDTO;
+        }
 
         return transactionDTO;
     }

@@ -27,11 +27,11 @@ public class OTP {
     private long otpId;
 
     @ManyToOne
-    @JoinColumn(name = "userId",nullable = false)
+    @JoinColumn(name = "user_id",nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "transactionId",nullable = false)
+    @JoinColumn(name = "transaction_id",nullable = false)
     private Transaction transaction;
 
     private String otpValue;
@@ -39,7 +39,10 @@ public class OTP {
     @Column(nullable = false)
     private boolean used;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
 
 

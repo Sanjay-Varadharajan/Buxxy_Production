@@ -54,7 +54,7 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionStatus transactionStatus=TransactionStatus.PENDING;
+    private TransactionStatus transactionStatus;
 
     @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL)
     private FraudScore fraudScore;

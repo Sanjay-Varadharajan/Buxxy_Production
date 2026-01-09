@@ -1,5 +1,6 @@
 package com.buxxy.buxxy_fraud_engine.model;
 
+import com.buxxy.buxxy_fraud_engine.enums.RuleType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,9 @@ public class FraudRules {
     @NotNull(message = "Should not be null")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal threshold;
+
+   @Enumerated(EnumType.STRING)
+    private RuleType ruleType;
 
     private boolean isActive=true;
 

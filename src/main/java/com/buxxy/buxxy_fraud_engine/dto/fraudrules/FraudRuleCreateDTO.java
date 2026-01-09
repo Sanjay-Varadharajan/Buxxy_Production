@@ -3,6 +3,7 @@ package com.buxxy.buxxy_fraud_engine.dto.fraudrules;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.buxxy.buxxy_fraud_engine.enums.RuleType;
 import com.buxxy.buxxy_fraud_engine.model.FraudRules;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,9 @@ public class FraudRuleCreateDTO {
 
     @NotNull
     private BigDecimal ruleThreshold;
+
+    @NotBlank(message = "Rule type must not be blank")
+    private RuleType ruleType;
 
     private LocalDateTime ruleUpdatedOn;
 
