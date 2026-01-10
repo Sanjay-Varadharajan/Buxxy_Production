@@ -1,6 +1,5 @@
 package com.buxxy.buxxy_fraud_engine.simulation.service;
 
-import com.buxxy.buxxy_fraud_engine.dto.transaction.TransactionResponseDTO;
 import com.buxxy.buxxy_fraud_engine.enums.Decision;
 import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
@@ -86,23 +85,34 @@ public class SimulationTransactionService {
 
         if (decision== Decision.BLOCK){
             transaction.setTransactionStatus(TransactionStatus.BLOCKED);
+            transaction.setTransactionAmount(null);
+            transaction.setTransactionLocation(null);
             transactionRepository.save(transaction);
+            transactionDTO.setTransactionId(transaction.getTransactionId());
+            transactionDTO.setTransactionStatus(TransactionStatus.BLOCKED);
+            transactionDTO.setMessage("Transaction blocked due to high risk.");
+
             return transactionDTO;
         }
 
         else if (decision==Decision.ALLOW){
             transaction.setTransactionStatus(TransactionStatus.APPROVED);
             transactionRepository.save(transaction);
+
+            transactionDTO.setTransactionId(transaction.getTransactionId());
+            transactionDTO.setTransactionStatus(TransactionStatus.APPROVED);
+            transactionDTO.setMessage("Transaction approved successfully.");
             return transactionDTO;
 
         }
         else if(decision==Decision.STEP_UP){
+            transaction.setTransactionStatus(TransactionStatus.PENDING);
             transactionRepository.save(transaction);
 
-            String otpValue=otpService.generateAndSaveOtp(transaction,loggedInUser);
-            emailService.sendOtp(loggedInUser.getUserMail(),otpValue);
-            transactionDTO.setTransactionId(transactionDTO.getTransactionId());
+            String otpValue = otpService.generateAndSaveOtp(transaction, loggedInUser);
+            emailService.sendOtp(loggedInUser.getUserMail(), otpValue);
 
+            transactionDTO.setTransactionId(transaction.getTransactionId());
             transactionDTO.setTransactionStatus(TransactionStatus.PENDING);
             transactionDTO.setTransactionDecision(Decision.STEP_UP);
             transactionDTO.setMessage("OTP sent to email. Verify to complete transaction.");

@@ -23,7 +23,7 @@ public class SimulationTransactionDTO {
     @NotNull(message = "User ID is required")
     private Long userId;
 
-    private int transactionId;
+    private Long transactionId;
 
 
     @NotNull(message = "Transaction amount is required")

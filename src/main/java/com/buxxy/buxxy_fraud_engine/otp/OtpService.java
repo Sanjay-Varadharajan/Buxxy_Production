@@ -1,10 +1,13 @@
 package com.buxxy.buxxy_fraud_engine.otp;
 
+import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.OTP;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import com.buxxy.buxxy_fraud_engine.model.User;
 import com.buxxy.buxxy_fraud_engine.repositories.OtpRepository;
+import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -18,6 +21,9 @@ public class OtpService {
     private final OtpRepository otpRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    private final TransactionRepository transactionRepository;
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public String generateAndSaveOtp(Transaction transaction, User user){
         int otpInt=100000+secureRandom.nextInt(900000);
@@ -26,7 +32,7 @@ public class OtpService {
         OTP otp=new OTP();
         otp.setTransaction(transaction);
         otp.setUser(user);
-        otp.setOtpValue(otpValue);
+        otp.setOtpValue(bCryptPasswordEncoder.encode(otpValue));
         otp.setUsed(false);
         otp.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
 
@@ -39,7 +45,8 @@ public class OtpService {
 
         if (otpOpt.isPresent()){
             OTP otp=otpOpt.get();
-            if(otp.getOtpExpiry().isAfter(LocalDateTime.now())){
+            if(bCryptPasswordEncoder.matches(otpValue,otp.getOtpValue()) &&
+            otp.getOtpExpiry().isAfter(LocalDateTime.now())){
                 otp.setUsed(true);
                 otpRepository.save(otp);
                 return true;
@@ -48,4 +55,31 @@ public class OtpService {
         return false;
 
     }
+
+    public String verifyOtp(Long transactionId, String otp) {
+        Optional<Transaction> txnOpt = transactionRepository.findById(transactionId);
+
+        if (txnOpt.isEmpty())
+            return "Transaction not found";
+
+        Transaction transaction = txnOpt.get();
+
+        if (transaction.getTransactionStatus() != TransactionStatus.PENDING)
+            return "Transaction already completed or blocked";
+
+        boolean valid = validateOtp(transactionId, otp);
+
+        if (valid) {
+            transaction.setTransactionStatus(TransactionStatus.APPROVED);
+            transactionRepository.save(transaction);
+            return "OTP verified. Transaction completed successfully.";
+        } else {
+            transaction.setTransactionStatus(TransactionStatus.BLOCKED);
+            transaction.setTransactionAmount(null);
+            transaction.setTransactionLocation(null);
+            transactionRepository.save(transaction);
+            return "Invalid or expired OTP. Transaction blocked.";
+        }
+    }
+
 }
