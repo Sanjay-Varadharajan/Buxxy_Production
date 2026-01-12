@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -24,7 +27,7 @@ public class FraudScore {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long fraudScoreId;
 
-    @JoinColumn(name = "transactionId",nullable = false,unique = true)
+    @JoinColumn(name = "transaction_id",nullable = false,unique = true)
     @OneToOne
     private Transaction transaction;
 
@@ -33,4 +36,8 @@ public class FraudScore {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Decision decision;
+
+    @CreatedDate
+    @Column(nullable = false,updatable = false)
+    private LocalDateTime CreatedOn;
 }

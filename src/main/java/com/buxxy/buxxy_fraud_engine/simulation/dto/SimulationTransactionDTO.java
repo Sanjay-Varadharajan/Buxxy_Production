@@ -25,7 +25,6 @@ public class SimulationTransactionDTO {
 
     private Long transactionId;
 
-
     @NotNull(message = "Transaction amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal transactionAmount;
