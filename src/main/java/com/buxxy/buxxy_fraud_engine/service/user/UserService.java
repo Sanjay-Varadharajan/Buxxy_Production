@@ -2,8 +2,11 @@ package com.buxxy.buxxy_fraud_engine.service.user;
 
 import com.buxxy.buxxy_fraud_engine.dto.user.UserResponseDTO;
 import com.buxxy.buxxy_fraud_engine.dto.user.UserUpdateDto;
+import com.buxxy.buxxy_fraud_engine.enums.AuditStatus;
 import com.buxxy.buxxy_fraud_engine.exceptions.UserNotFoundException;
+import com.buxxy.buxxy_fraud_engine.model.AuditLog;
 import com.buxxy.buxxy_fraud_engine.model.User;
+import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final AuditRepository auditRepository;
 
 
     @Transactional(readOnly = true)
@@ -42,6 +46,12 @@ public class UserService {
 
         loggedInUser.setUserName(userUpdateDto.getUserName());
         User updatedUser= userRepository.save(loggedInUser);
+        AuditLog auditLog=new AuditLog();
+        auditLog.setUser(loggedInUser);
+        auditLog.setStatus(AuditStatus.UPDATED);
+        auditLog.setAction(principal.getName()+" User is Created");
+        auditRepository.save(auditLog);
+
         return new UserUpdateDto(updatedUser);
     }
 
@@ -54,6 +64,10 @@ public class UserService {
 
         user.setUserActive(false);
         userRepository.save(user);
-
+        AuditLog auditLog=new AuditLog();
+        auditLog.setUser(user);
+        auditLog.setStatus(AuditStatus.DEACTIVATED);
+        auditLog.setAction(principal.getName()+" Got Deactivated");
+        auditRepository.save(auditLog);
     }
 }

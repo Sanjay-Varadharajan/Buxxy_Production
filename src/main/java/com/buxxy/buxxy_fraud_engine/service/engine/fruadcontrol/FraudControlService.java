@@ -3,6 +3,7 @@ package com.buxxy.buxxy_fraud_engine.service.engine.fruadcontrol;
 
 import com.buxxy.buxxy_fraud_engine.dto.fraudscore.FraudScoreResponseDTO;
 import com.buxxy.buxxy_fraud_engine.enums.Decision;
+import com.buxxy.buxxy_fraud_engine.model.AuditLog;
 import com.buxxy.buxxy_fraud_engine.model.FraudScore;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import com.buxxy.buxxy_fraud_engine.repositories.FraudScoreRepository;
@@ -36,7 +37,9 @@ public class FraudControlService {
     private static final int NEW_CITY_SCORE = 50;
 
 
+
     public Decision fraudControl(Transaction transaction) {
+
         Decision decisionMade=calculatedScore(transaction)
                 .getDecision();
 
@@ -45,7 +48,8 @@ public class FraudControlService {
 
 
     public FraudScoreResponseDTO calculatedScore(Transaction transaction) {
-        int score = 0;
+        int fraudScoreInit=0;
+
         List<Transaction> last5Transactions =
                 transactionRepository.findTop5ByUserUserIdOrderByTransactionOnDesc(transaction.getUser().getUserId());
 
@@ -64,9 +68,9 @@ public class FraudControlService {
 
 
         if (currentTransaction.compareTo(avgAmount.multiply(new BigDecimal("5"))) > 0) {
-            score = score + HIGH_AMOUNT_SCORE;
+            fraudScoreInit = fraudScoreInit + HIGH_AMOUNT_SCORE;
         } else if (currentTransaction.compareTo(avgAmount.multiply(new BigDecimal("2"))) > 0) {
-            score = score + MEDIUM_AMOUNT_SCORE;
+            fraudScoreInit = fraudScoreInit + MEDIUM_AMOUNT_SCORE;
         }
 
         boolean isNewCity = last5Transactions.stream()
@@ -75,18 +79,18 @@ public class FraudControlService {
                 .noneMatch(loc->loc.equalsIgnoreCase(transaction.getTransactionLocation()));
 
         if(isNewCity){
-            score =score+NEW_CITY_SCORE;
+            fraudScoreInit =fraudScoreInit+NEW_CITY_SCORE;
         }
-        score = Math.min(score, 100);
+        fraudScoreInit = Math.min(fraudScoreInit, 100);
 
 
         FraudScore fraudScore =
                 new FraudScore();
-        fraudScore.setRiskScore(score);
+        fraudScore.setRiskScore(fraudScoreInit);
         fraudScore.setTransaction(transaction);
-        if (score >= BLOCK_THRESHOLD) {
+        if (fraudScoreInit >= BLOCK_THRESHOLD) {
             fraudScore.setDecision(Decision.BLOCK);
-        } else if (score >= STEP_UP_THRESHOLD) {
+        } else if (fraudScoreInit >= STEP_UP_THRESHOLD) {
             fraudScore.setDecision(Decision.STEP_UP);
         } else {
             fraudScore.setDecision(Decision.ALLOW);
@@ -94,7 +98,11 @@ public class FraudControlService {
         fraudScoreRepository.save(fraudScore);
 
         return new FraudScoreResponseDTO(fraudScore);
+    }
 
 
+    public int fraudScore(Transaction transaction){
+        FraudScoreResponseDTO responseDTO=calculatedScore(transaction);
+        return responseDTO.getRiskScore();
     }
 }

@@ -3,8 +3,11 @@ package com.buxxy.buxxy_fraud_engine.service.engine.fruadrule;
 
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleCreateDTO;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleResponseDTO;
+import com.buxxy.buxxy_fraud_engine.enums.AuditStatus;
+import com.buxxy.buxxy_fraud_engine.model.AuditLog;
 import com.buxxy.buxxy_fraud_engine.model.FraudRules;
 import com.buxxy.buxxy_fraud_engine.model.User;
+import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.FraudRuleRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,7 @@ public class FraudRuleService {
 
     private final UserRepository userRepository;
 
+    private final AuditRepository auditRepository;
 
 
 
@@ -45,8 +49,12 @@ public class FraudRuleService {
         fraudRules.setThreshold(fraudRule.getRuleThreshold());
         fraudRules.setRuleType(fraudRule.getRuleType());
         fraudRules.setRuleUpdatedOn(LocalDateTime.now());
-
         fraudRuleRepository.save(fraudRules);
+        AuditLog auditLog=new AuditLog();
+        auditLog.setUser(loggedInAdmin);
+        auditLog.setStatus(AuditStatus.CREATED);
+        auditLog.setAction("new Fraud Rule"+ fraudRules.getRuleId()+"Created by "+loggedInAdmin.getUserMail());
+        auditRepository.save(auditLog);
 
         return new FraudRuleCreateDTO(fraudRules);
     }
@@ -82,8 +90,12 @@ public class FraudRuleService {
 
         fraudRules.setActive(false);
         fraudRules.setRuleUpdatedOn(LocalDateTime.now());
-
         fraudRuleRepository.save(fraudRules);
+        AuditLog auditLog=new AuditLog();
+        auditLog.setUser(loggedInAdmin);
+        auditLog.setStatus(AuditStatus.DEACTIVATED);
+        auditLog.setAction("rule DeActivated by: "+loggedInAdmin.getUserMail());
+        auditRepository.save(auditLog);
     }
 
     public FraudRuleResponseDTO activateRule(Principal principal, long ruleId) {
@@ -98,6 +110,11 @@ public class FraudRuleService {
         fraudRules.setRuleUpdatedOn(LocalDateTime.now());
 
      FraudRules rules=fraudRuleRepository.save(fraudRules);
+        AuditLog auditLog=new AuditLog();
+        auditLog.setUser(loggedInAdmin);
+        auditLog.setStatus(AuditStatus.ACTIVATED);
+        auditLog.setAction("rule activated by: "+loggedInAdmin.getUserMail());
+        auditRepository.save(auditLog);
      return new FraudRuleResponseDTO(rules);
     }
 }
