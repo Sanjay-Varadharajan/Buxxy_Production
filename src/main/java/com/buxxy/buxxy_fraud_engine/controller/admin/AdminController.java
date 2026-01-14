@@ -56,7 +56,4 @@ public class AdminController {
         Page<AuditLogResponseDTO> auditLog=adminService.viewAllLogs(principal,pageable);
         return ResponseEntity.ok(auditLog);
     }
-
-
-
 }
