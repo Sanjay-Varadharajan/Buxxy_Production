@@ -1,11 +1,9 @@
 package com.buxxy.buxxy_fraud_engine.otp;
 
 import com.buxxy.buxxy_fraud_engine.enums.AuditStatus;
+import com.buxxy.buxxy_fraud_engine.enums.Decision;
 import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
-import com.buxxy.buxxy_fraud_engine.model.AuditLog;
-import com.buxxy.buxxy_fraud_engine.model.OTP;
-import com.buxxy.buxxy_fraud_engine.model.Transaction;
-import com.buxxy.buxxy_fraud_engine.model.User;
+import com.buxxy.buxxy_fraud_engine.model.*;
 import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.OtpRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
@@ -82,6 +80,11 @@ public class OtpService {
             auditLog.setAction("otp Verified And Transaction is Allowed");
             auditLog.setUser(transaction.getUser());
             auditRepository.save(auditLog);
+            AuditLogForEngine auditLogForEngine=new AuditLogForEngine();
+            auditLogForEngine.setStatus(TransactionStatus.APPROVED);
+            auditLogForEngine.setDecision(Decision.ALLOW);
+            auditLogForEngine.setTransaction(transaction);
+            auditLogForEngine.setUser(transaction.getUser());
             return "OTP verified. Transaction completed successfully.";
         } else {
             transaction.setTransactionStatus(TransactionStatus.BLOCKED);
@@ -93,6 +96,11 @@ public class OtpService {
             auditLog.setAction("otp verification failed and transaction is blocked");
             auditLog.setStatus(AuditStatus.FAILURE);
             auditRepository.save(auditLog);
+            AuditLogForEngine auditLogForEngine=new AuditLogForEngine();
+            auditLogForEngine.setUser(transaction.getUser());
+            auditLogForEngine.setTransaction(transaction);
+            auditLogForEngine.setStatus(TransactionStatus.BLOCKED);
+            auditLogForEngine.setDecision(Decision.BLOCK);
             return "Invalid or expired OTP. Transaction blocked.";
         }
     }

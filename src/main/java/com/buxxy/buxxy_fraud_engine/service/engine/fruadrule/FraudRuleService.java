@@ -47,6 +47,7 @@ public class FraudRuleService {
         FraudRules fraudRules=new FraudRules();
         fraudRules.setRuleDescription(fraudRule.getRuleDescription());
         fraudRules.setThreshold(fraudRule.getRuleThreshold());
+        fraudRules.setMetadata(fraudRule.getMetadata());
         fraudRules.setRuleType(fraudRule.getRuleType());
         fraudRules.setRuleUpdatedOn(LocalDateTime.now());
         fraudRuleRepository.save(fraudRules);

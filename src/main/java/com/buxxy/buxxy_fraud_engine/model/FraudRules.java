@@ -37,11 +37,17 @@ public class FraudRules {
     @NotBlank(message = "description must not be Blank")
     private String ruleDescription;
 
-    @NotNull(message = "Should not be null")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
+    @Column(nullable = true)
     private BigDecimal threshold;
 
-   @Enumerated(EnumType.STRING)
+
+    @Column(columnDefinition = "TEXT")
+    private String metadata;
+
+
+    @Enumerated(EnumType.STRING)
+    @NotNull
     private RuleType ruleType;
 
     private boolean isActive=true;

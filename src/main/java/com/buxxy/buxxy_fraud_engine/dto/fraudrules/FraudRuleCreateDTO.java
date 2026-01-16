@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.buxxy.buxxy_fraud_engine.enums.RuleType;
 import com.buxxy.buxxy_fraud_engine.model.FraudRules;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,10 @@ public class FraudRuleCreateDTO {
     @NotBlank
     private String ruleDescription;
 
-    @NotNull
     private BigDecimal ruleThreshold;
+
+    @Column(columnDefinition = "TEXT")
+    private String metadata;
 
     @NotBlank(message = "Rule type must not be blank")
     private RuleType ruleType;
