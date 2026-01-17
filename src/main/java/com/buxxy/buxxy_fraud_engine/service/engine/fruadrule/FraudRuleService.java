@@ -4,12 +4,14 @@ package com.buxxy.buxxy_fraud_engine.service.engine.fruadrule;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleCreateDTO;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleResponseDTO;
 import com.buxxy.buxxy_fraud_engine.enums.AuditStatus;
+import com.buxxy.buxxy_fraud_engine.enums.RuleType;
 import com.buxxy.buxxy_fraud_engine.model.AuditLog;
 import com.buxxy.buxxy_fraud_engine.model.FraudRules;
 import com.buxxy.buxxy_fraud_engine.model.User;
 import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.FraudRuleRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
+import org.json.JSONObject;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,15 +48,25 @@ public class FraudRuleService {
 
         FraudRules fraudRules=new FraudRules();
         fraudRules.setRuleDescription(fraudRule.getRuleDescription());
-        fraudRules.setThreshold(fraudRule.getRuleThreshold());
-        fraudRules.setMetadata(fraudRule.getMetadata());
+        if(fraudRule.getMetadata()!=null){
+            try{
+                new JSONObject(fraudRule.getMetadata());
+                fraudRules.setMetadata(fraudRule.getMetadata());
+            }catch (Exception e){
+                throw new IllegalArgumentException("Invalid JSon");
+            }
+        }
         fraudRules.setRuleType(fraudRule.getRuleType());
+        if(fraudRule.getRuleType()== RuleType.HIGH_AMOUNT && fraudRule.getRuleThreshold()==null){
+            throw new IllegalArgumentException("threshold required for HIGH_AMOUNT rule");
+        }
+        fraudRules.setThreshold(fraudRule.getRuleThreshold());
         fraudRules.setRuleUpdatedOn(LocalDateTime.now());
-        fraudRuleRepository.save(fraudRules);
         AuditLog auditLog=new AuditLog();
+        auditLog.setAction("new Fraud Rule "+ fraudRules.getRuleId()+"Created by "+loggedInAdmin.getUserMail());
+        fraudRuleRepository.save(fraudRules);
         auditLog.setUser(loggedInAdmin);
         auditLog.setStatus(AuditStatus.CREATED);
-        auditLog.setAction("new Fraud Rule"+ fraudRules.getRuleId()+"Created by "+loggedInAdmin.getUserMail());
         auditRepository.save(auditLog);
 
         return new FraudRuleCreateDTO(fraudRules);

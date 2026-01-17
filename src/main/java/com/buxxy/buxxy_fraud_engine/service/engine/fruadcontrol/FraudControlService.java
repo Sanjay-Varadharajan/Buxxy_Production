@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZoneOffset;
 import java.util.List;
 
 
@@ -137,7 +138,31 @@ public class FraudControlService {
                 break;
 
             case VELOCITY:
-                return false;
+                if(fraudRule.getMetadata()==null){
+                    return false;
+                }
+                try{
+                    JSONObject jsonObject=new JSONObject(fraudRule.getMetadata());
+                    int maxCount=jsonObject.optInt("maxCount",0);
+                    int windowSeconds=jsonObject.optInt("windowSeconds",0);
+
+                    if(maxCount<=0 || windowSeconds<=0){
+                        return false;
+                    }
+                    long now=transaction.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+
+                    long count=last5.stream().filter(tx->{
+                        long txTime=tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+
+                        return (now-txTime)<=windowSeconds;
+                    })
+                            .count();
+
+                    return count>=maxCount;
+                }catch (Exception e){
+                    return false;
+                }
+
 
             case LOCATION:
                 boolean validLocation=last5.stream()

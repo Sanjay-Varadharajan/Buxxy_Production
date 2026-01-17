@@ -42,7 +42,7 @@ public class FraudRules {
     private BigDecimal threshold;
 
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "JSON")
     private String metadata;
 
 
