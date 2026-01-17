@@ -42,7 +42,8 @@ public class FraudRules {
     private BigDecimal threshold;
 
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT",nullable = false)
+    @NotBlank(message = "metadata json must not be Empty")
     private String metadata;
 
 

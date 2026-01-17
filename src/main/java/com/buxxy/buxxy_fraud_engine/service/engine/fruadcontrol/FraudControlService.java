@@ -172,7 +172,53 @@ public class FraudControlService {
                 return validLocation;
 
             case TIME_WINDOW:
-                return false;
+                try {
+                    List<Transaction> recentTx = last5.stream()
+                            .filter(tx -> !tx.getTransactionOn().isAfter(transaction.getTransactionOn()))
+                            .toList();
+
+                    if (recentTx.isEmpty()) return false;
+
+                    long nowEpoch = transaction.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+
+                    if (fraudRule.getMetadata() != null && !fraudRule.getMetadata().isEmpty()) {
+                        JSONObject json = new JSONObject(fraudRule.getMetadata());
+                        int windowSeconds = json.optInt("windowSeconds", -1);
+                        int score = json.optInt("score", 10);
+
+                        if (windowSeconds > 0) {
+                            long avgEpoch = (long) recentTx.stream()
+                                    .mapToLong(tx -> tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC))
+                                    .average()
+                                    .orElse(nowEpoch);
+
+                            boolean inWindow = nowEpoch >= (avgEpoch - windowSeconds) &&
+                                               nowEpoch <= (avgEpoch + windowSeconds);
+
+                            return !inWindow;
+                        }
+                    }
+
+                    double[] epochs = recentTx.stream()
+                            .mapToDouble(tx -> tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC))
+                            .toArray();
+
+                    double avgEpoch = (long) java.util.Arrays.stream(epochs).average().orElse(nowEpoch);
+                    double variance = java.util.Arrays.stream(epochs)
+                            .map(epoch -> Math.pow(epoch - avgEpoch, 2))
+                            .average()
+                            .orElse(0);
+                    double stdDev = (long) Math.sqrt(variance);
+
+                    double effectiveWindow = Math.max(stdDev, 60);
+                    boolean isInsideWindow = nowEpoch >= (avgEpoch - effectiveWindow) &&
+                            nowEpoch <= (avgEpoch + effectiveWindow);
+                    return !isInsideWindow;
+
+                } catch (Exception e) {
+                    return false;
+                }
+
 
             case DEVICE_CHANGE:
                 return false;
