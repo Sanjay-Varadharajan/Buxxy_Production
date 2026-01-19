@@ -4,7 +4,6 @@ import com.buxxy.buxxy_fraud_engine.enums.AuditStatus;
 import com.buxxy.buxxy_fraud_engine.enums.Decision;
 import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.AuditLog;
-import com.buxxy.buxxy_fraud_engine.model.FraudScore;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import com.buxxy.buxxy_fraud_engine.model.User;
 import com.buxxy.buxxy_fraud_engine.otp.EmailService;
@@ -12,10 +11,11 @@ import com.buxxy.buxxy_fraud_engine.otp.OtpService;
 import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.UserRepository;
-import com.buxxy.buxxy_fraud_engine.service.engine.fruadcontrol.FraudControlService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadcontrol.FraudControlService;
 import com.buxxy.buxxy_fraud_engine.simulation.dto.SimulationTransactionDTO;
 import com.buxxy.buxxy_fraud_engine.simulation.enums.SimulationScenario;
 import com.buxxy.buxxy_fraud_engine.simulation.utils.SimulationUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,7 @@ public class SimulationTransactionService {
 
 
     public SimulationTransactionDTO transaction(SimulationTransactionDTO transactionDTO,
-                                                Principal principal) {
+                                                Principal principal, HttpServletRequest httpServletRequest) {
 
         User loggedInUser = userRepository
                 .findByUserMailAndUserActiveTrue(principal.getName())
@@ -93,7 +93,7 @@ public class SimulationTransactionService {
 
         transaction.setTransactionStatus(TransactionStatus.PENDING);
 
-        var decision=fraudControlService.fraudControl(transaction);
+        var decision=fraudControlService.fraudControl(transaction,httpServletRequest);
         transactionDTO.setTransactionDecision(decision);
 
 

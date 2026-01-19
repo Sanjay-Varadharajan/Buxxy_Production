@@ -1,9 +1,13 @@
-package com.buxxy.buxxy_fraud_engine.service.engine.fruadcontrol;
+package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadcontrol;
 
 
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DetectionService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DeviceFingerPrintService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.extractor.DeviceContextExtractor;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleDtoForEngine;
 import com.buxxy.buxxy_fraud_engine.dto.fraudscore.FraudScoreResponseDTO;
 import com.buxxy.buxxy_fraud_engine.enums.Decision;
+import com.buxxy.buxxy_fraud_engine.enums.DeviceEvent;
 import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.AuditLogForEngine;
 import com.buxxy.buxxy_fraud_engine.model.FraudScore;
@@ -12,6 +16,7 @@ import com.buxxy.buxxy_fraud_engine.repositories.EngineAuditLogRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.FraudRuleRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.FraudScoreRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -35,22 +40,28 @@ public class FraudControlService {
 
     private final EngineAuditLogRepository engineAuditLogRepository;
 
+    private final DeviceContextExtractor deviceContextExtractor;
+
+    private final DeviceFingerPrintService deviceFingerPrintService;
+
+    private final DetectionService detectionService;
+
     private static final int BLOCK_THRESHOLD = 75;
 
     private static final int STEP_UP_THRESHOLD = 40;
 
 
 
-    public Decision fraudControl(Transaction transaction) {
+    public Decision fraudControl(Transaction transaction,HttpServletRequest httpServletRequest) {
 
-        Decision decisionMade=calculatedScore(transaction)
+        Decision decisionMade=calculatedScore(transaction,httpServletRequest)
                 .getDecision();
 
         return decisionMade;
     }
 
 
-    public FraudScoreResponseDTO calculatedScore(Transaction transaction) {
+    public FraudScoreResponseDTO calculatedScore(Transaction transaction,HttpServletRequest httpServletRequest) {
         int fraudScoreInit=0;
 
         List<Transaction> last5Transaction=transactionRepository
@@ -68,7 +79,7 @@ public class FraudControlService {
         List<FraudRuleDtoForEngine> fraudRules=getActiveRules();
 
         for(FraudRuleDtoForEngine rule:fraudRules){
-            if(ruleApplies(transaction,last5Transaction,rule,avgAmount)){
+            if(ruleApplies(transaction,last5Transaction,rule,avgAmount,httpServletRequest)){
                 int scoreToAdd=0;
 
                 if(rule.getMetadata()!=null && !rule.getMetadata().isEmpty()){
@@ -127,7 +138,8 @@ public class FraudControlService {
     private boolean ruleApplies(Transaction transaction,
                                 List<Transaction> last5,
                                 FraudRuleDtoForEngine fraudRule,
-                                BigDecimal avgAmount){
+                                BigDecimal avgAmount,
+                                HttpServletRequest httpServletRequest){
 
         switch (fraudRule.getRuleType()){
             case HIGH_AMOUNT:
@@ -219,9 +231,24 @@ public class FraudControlService {
                     return false;
                 }
 
-
             case DEVICE_CHANGE:
-                return false;
+
+                if(httpServletRequest==null){
+                    return false;
+                }
+
+                String userAgent=deviceContextExtractor.getUserAgent(httpServletRequest);
+                String timeZone=deviceContextExtractor.getTimeZone(httpServletRequest);
+                String language=deviceContextExtractor.getLanguage(httpServletRequest);
+
+                DeviceEvent deviceEvent=   detectionService.detectDevice(
+                        transaction.getUser().getUserId(),
+                        userAgent,
+                        timeZone,
+                        language
+                );
+
+                return deviceEvent==DeviceEvent.NEW_DEVICE || deviceEvent==DeviceEvent.DEVICE_MISMATCH;
 
             case IP_BLACKLIST:
                 return false;
@@ -233,8 +260,8 @@ public class FraudControlService {
     }
 
 
-    public int fraudScore(Transaction transaction){
-        FraudScoreResponseDTO responseDTO=calculatedScore(transaction);
+    public int fraudScore(Transaction transaction,HttpServletRequest httpServletRequest){
+        FraudScoreResponseDTO responseDTO=calculatedScore(transaction,httpServletRequest);
         return responseDTO.getRiskScore();
     }
 

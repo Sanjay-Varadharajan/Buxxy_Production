@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 public class BuxxyFraudEngineApplication {
 
 	public static void main(String[] args) {
-
 		SpringApplication.run(BuxxyFraudEngineApplication.class, args);
 	}
 }

@@ -2,7 +2,7 @@ package com.buxxy.buxxy_fraud_engine.controller.engine.fruadrule;
 
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleCreateDTO;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleResponseDTO;
-import com.buxxy.buxxy_fraud_engine.service.engine.fruadrule.FraudRuleService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadrule.FraudRuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

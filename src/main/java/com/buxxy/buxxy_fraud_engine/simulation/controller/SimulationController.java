@@ -2,6 +2,7 @@ package com.buxxy.buxxy_fraud_engine.simulation.controller;
 
 import com.buxxy.buxxy_fraud_engine.simulation.dto.SimulationTransactionDTO;
 import com.buxxy.buxxy_fraud_engine.simulation.service.SimulationTransactionService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,9 +29,9 @@ public class SimulationController {
     @PreAuthorize("hasRole('TESTER')")
     public ResponseEntity<SimulationTransactionDTO> transaction(@RequestBody
                                                                     @Valid SimulationTransactionDTO transactionDTO,
-                                                                Principal principal){
+                                                                Principal principal, HttpServletRequest httpServletRequest){
         SimulationTransactionDTO simulationTransaction=
-                simulationTransactionService.transaction(transactionDTO,principal);
+                simulationTransactionService.transaction(transactionDTO,principal,httpServletRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(simulationTransaction);

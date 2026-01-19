@@ -1,4 +1,4 @@
-package com.buxxy.buxxy_fraud_engine.service.engine.fruadrule;
+package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadrule;
 
 
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleCreateDTO;
