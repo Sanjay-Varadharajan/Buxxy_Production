@@ -1,1 +1,6 @@
 1.implement fraud rule and integrate it to engine for score detection
+
+check ip->not by actual address
+use it as supporting signal and do it by->location of ip ,check vpn tor,ip range
+->new ip+same device=normal
+->new ip+new device=sus

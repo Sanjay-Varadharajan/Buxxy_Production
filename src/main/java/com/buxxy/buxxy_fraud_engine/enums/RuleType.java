@@ -6,5 +6,5 @@ public enum RuleType {
     LOCATION,
     TIME_WINDOW,
     DEVICE_CHANGE,
-    IP_BLACKLIST
+    IP_CHANGE
 }
