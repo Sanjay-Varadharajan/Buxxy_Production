@@ -1,12 +1,14 @@
 package com.buxxy.buxxy_fraud_engine.repositories;
 
 
-import com.buxxy.buxxy_fraud_engine.model.DeviceIPHistory;
+import com.buxxy.buxxy_fraud_engine.model.DeviceIpHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface DeviceIPHistoryRepository extends JpaRepository<DeviceIPHistory,Integer> {
+import java.util.Optional;
 
-    DeviceIPHistory findTopByUserIdOrderBySeenAtDesc(long userId);
+@Repository
+public interface DeviceIPHistoryRepository extends JpaRepository<DeviceIpHistory,Integer> {
+
+    Optional<DeviceIpHistory> findTopByUserIdOrderBySeenAtDesc(long userId);
 }

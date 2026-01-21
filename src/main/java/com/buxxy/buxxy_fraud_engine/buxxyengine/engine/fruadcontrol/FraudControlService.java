@@ -26,7 +26,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FraudControlService {
 
-
     private final TransactionRepository transactionRepository;
 
     private final FraudScoreRepository fraudScoreRepository;
@@ -125,13 +124,7 @@ public class FraudControlService {
 
 
     }
-
-
-
-
-
-
-
+    
     public List<FraudRuleDtoForEngine> getActiveRules(){
        List<FraudRuleDtoForEngine> activeRules=fraudRuleRepository
                                                 .findByIsActiveTrue()

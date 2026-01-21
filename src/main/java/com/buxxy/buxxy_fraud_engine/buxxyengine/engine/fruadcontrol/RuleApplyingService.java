@@ -1,9 +1,13 @@
 package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadcontrol;
 
 import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DetectionService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DeviceFingerPrintService;
 import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.extractor.DeviceContextExtractor;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.ipService.IpServiceForAnomaly;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleDtoForEngine;
 import com.buxxy.buxxy_fraud_engine.enums.DeviceEvent;
+import com.buxxy.buxxy_fraud_engine.model.Device;
+import com.buxxy.buxxy_fraud_engine.model.DeviceIpHistory;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +25,11 @@ public class RuleApplyingService {
     private final DeviceContextExtractor deviceContextExtractor;
 
 
+    private final IpServiceForAnomaly ipServiceForAnomaly;
+
     private final DetectionService detectionService;
+
+    private final DeviceFingerPrintService deviceFingerPrintService;
 
 
 
@@ -140,6 +148,22 @@ public class RuleApplyingService {
                 return deviceEvent==DeviceEvent.NEW_DEVICE || deviceEvent==DeviceEvent.DEVICE_MISMATCH;
             case IP_CHANGE:
 
+                String userAgent1=deviceContextExtractor.getUserAgent(httpServletRequest);
+                String timeZone1=deviceContextExtractor.getTimeZone(httpServletRequest);
+                String language1=deviceContextExtractor.getLanguage(httpServletRequest);
+                String deviceFingerPrint=deviceFingerPrintService.fingerprint(userAgent1,timeZone1,language1);
+
+                Device device = detectionService.detectAndGetDevice(
+                        transaction.getUser().getUserId(),
+                        userAgent1,
+                        timeZone1,
+                        language1
+                );
+
+                DeviceIpHistory deviceIpHistory=ipServiceForAnomaly.checkIpAnomaly(
+                        transaction.getUser().getUserId(),device.getDeviceId(),httpServletRequest);
+
+                return deviceIpHistory.isAnomaly();
 
             default:
                 return false;

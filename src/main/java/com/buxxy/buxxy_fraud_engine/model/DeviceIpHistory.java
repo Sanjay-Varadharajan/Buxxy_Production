@@ -24,16 +24,18 @@ public class DeviceIpHistory {
 
     private long userId;
 
-    private Integer deviceId;
+    private Long deviceId;
 
     private String ipAddress;
 
     private String ipCountry;
 
-    private String ipState;
-
     private String ipCity;
 
     private Instant seenAt;
+
+    private boolean isAnomaly;
+
+    private String deviceFingerPrint;
 
 }

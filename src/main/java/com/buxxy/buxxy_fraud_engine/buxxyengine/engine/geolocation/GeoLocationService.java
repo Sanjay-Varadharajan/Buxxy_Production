@@ -1,34 +1,42 @@
-package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.geolocation;
+    package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.geolocation;
 
-import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.model.CityResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+    import com.maxmind.geoip2.DatabaseReader;
+    import com.maxmind.geoip2.model.CityResponse;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
 
-@Service
-@RequiredArgsConstructor
-public class GeoLocationService {
+    import java.net.InetAddress;
+    import java.util.Map;
 
-    private final DatabaseReader dbReader;
+    @Service
+    @RequiredArgsConstructor
+    public class GeoLocationService {
 
-    public GeoLocationService() throws IOException{
-        File database=new File("src/main/resources/GeoLite2-City.mmdb");
-        this.dbReader=new DatabaseReader.Builder(database).build();
-    }
 
-    public String getCounty(String ip){
-        try {
-            InetAddress ipAddress=InetAddress.getByName(ip);
-            CityResponse response = dbReader.city(ipAddress);
-            return response.country().isoCode();
+        private final DatabaseReader dbReader;
+
+        public String getCountry(String ip){
+            try {
+                InetAddress ipAddress=InetAddress.getByName(ip);
+                CityResponse response = dbReader.city(ipAddress);
+                return response.country().isoCode();
+            }
+            catch (Exception e){
+                return "UNKNOWN";
+            }
         }
-        catch (Exception e){
-            return "UNKNOWN";
-        }
-    }
+        public String getCity(String ip){
+            try {
+                InetAddress inetAddress=InetAddress.getByName(ip);
+                CityResponse response=dbReader.city(inetAddress);
+                String city=response.city().name();
 
-}
+
+                return city != null ? city : "UNKNOWN";
+            } catch (Exception e) {
+                return "UNKNOWN";
+            }
+        }
+
+    }

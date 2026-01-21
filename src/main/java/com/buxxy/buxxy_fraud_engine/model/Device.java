@@ -18,7 +18,7 @@ public class Device {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int deviceId;
+    private long deviceId;
 
     private Long userId;
 

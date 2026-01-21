@@ -4,3 +4,5 @@ check ip->not by actual address
 use it as supporting signal and do it by->location of ip ,check vpn tor,ip range
 ->new ip+same device=normal
 ->new ip+new device=sus
+
+Inet Address->used to resolve the host name to their respective ip and vice versa and used to map the host_name to the ip address and ip address to host_name
