@@ -3,6 +3,7 @@
     import com.buxxy.buxxy_fraud_engine.idempotency.enums.IdempotencyStatus;
     import com.buxxy.buxxy_fraud_engine.idempotency.model.IdempotencyRecord;
     import com.buxxy.buxxy_fraud_engine.idempotency.repository.IdempotencyRepository;
+    import com.buxxy.buxxy_fraud_engine.redis.service.RedisService;
     import com.fasterxml.jackson.databind.ObjectMapper;
     import lombok.AllArgsConstructor;
     import org.apache.commons.codec.digest.DigestUtils;
@@ -19,6 +20,7 @@
 
         private final IdempotencyRepository idempotencyRepository;
         private final ObjectMapper objectMapper;
+        private final RedisService redisService;
 
         private static final int WAIT_INTERVAL_MS=100;
         private static final int MAX_WAIT_MS=5000;
@@ -33,6 +35,13 @@
         ){
             String requestJson=serialize(request);
             String hash= DigestUtils.sha256Hex(requestJson);
+
+            String redisKey="idem:" + key;
+            String cachedResponse=redisService.getValue(redisKey);
+
+            if(cachedResponse!=null){
+                return deserialize(cachedResponse,responseType);
+            }
 
             Optional<IdempotencyRecord> exists=idempotencyRepository.findByIdempotencyKey(key);
             IdempotencyRecord record = exists.orElse(new IdempotencyRecord());
@@ -76,6 +85,7 @@
                     if (record.getStatus() == IdempotencyStatus.FAILED) {
                         record.setStatus(IdempotencyStatus.IN_PROGRESS);
                         idempotencyRepository.save(record);
+                        redisService.setValue(redisKey, "FAILED", 30);
                     }
                 }
             }
@@ -85,6 +95,10 @@
                 record.setResponse(serialize(response));
                 record.setStatus(IdempotencyStatus.SUCCESS);
                 idempotencyRepository.save(record);
+
+                String responseJson=serialize(response);
+                redisService.setValue(redisKey,responseJson,300);
+
                 return response;
             } catch (Exception e) {
                 record.setStatus(IdempotencyStatus.FAILED);
