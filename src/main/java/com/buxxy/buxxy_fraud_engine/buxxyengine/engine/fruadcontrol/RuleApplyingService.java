@@ -151,7 +151,6 @@ public class RuleApplyingService {
                 String userAgent1=deviceContextExtractor.getUserAgent(httpServletRequest);
                 String timeZone1=deviceContextExtractor.getTimeZone(httpServletRequest);
                 String language1=deviceContextExtractor.getLanguage(httpServletRequest);
-                String deviceFingerPrint=deviceFingerPrintService.fingerprint(userAgent1,timeZone1,language1);
 
                 Device device = detectionService.detectAndGetDevice(
                         transaction.getUser().getUserId(),

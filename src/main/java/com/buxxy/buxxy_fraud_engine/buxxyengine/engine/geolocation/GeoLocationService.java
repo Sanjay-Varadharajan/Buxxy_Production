@@ -31,8 +31,6 @@
                 InetAddress inetAddress=InetAddress.getByName(ip);
                 CityResponse response=dbReader.city(inetAddress);
                 String city=response.city().name();
-
-
                 return city != null ? city : "UNKNOWN";
             } catch (Exception e) {
                 return "UNKNOWN";
