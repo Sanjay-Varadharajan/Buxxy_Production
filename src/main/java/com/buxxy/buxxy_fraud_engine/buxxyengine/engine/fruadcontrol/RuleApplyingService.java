@@ -1,7 +1,8 @@
 package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.fruadcontrol;
 
 import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DetectionService;
-import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.device.service.DeviceFingerPrintService;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.dynmaicrules.model.UserRuleProfile;
+import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.dynmaicrules.service.UserProfileService;
 import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.extractor.DeviceContextExtractor;
 import com.buxxy.buxxy_fraud_engine.buxxyengine.engine.ipService.IpServiceForAnomaly;
 import com.buxxy.buxxy_fraud_engine.dto.fraudrules.FraudRuleDtoForEngine;
@@ -9,6 +10,7 @@ import com.buxxy.buxxy_fraud_engine.enums.DeviceEvent;
 import com.buxxy.buxxy_fraud_engine.model.Device;
 import com.buxxy.buxxy_fraud_engine.model.DeviceIpHistory;
 import com.buxxy.buxxy_fraud_engine.model.Transaction;
+import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
@@ -29,9 +31,9 @@ public class RuleApplyingService {
 
     private final DetectionService detectionService;
 
-    private final DeviceFingerPrintService deviceFingerPrintService;
+    private final UserProfileService userProfileService;
 
-
+    private final TransactionRepository transactionRepository;
 
     public boolean ruleApplies(Transaction transaction,
                                 List<Transaction> last5,
@@ -42,37 +44,71 @@ public class RuleApplyingService {
         switch (fraudRule.getRuleType()){
             case HIGH_AMOUNT:
                 if(fraudRule.getThreshold()!=null){
-                    boolean threshold=transaction.getTransactionAmount().compareTo(fraudRule.getThreshold())>0;
-                    return threshold;
+                    UserRuleProfile profile=userProfileService.getOrCreateProfile(transaction.getUser(), fraudRule);
+
+                    int windowSize=5;
+                    BigDecimal multiplier=profile.getMultiplier() != null ? profile.getMultiplier() : BigDecimal.valueOf(3);
+                    BigDecimal minThreshold = BigDecimal.valueOf(10);
+
+                    if(fraudRule.getMetadata() != null && !fraudRule.getMetadata().isEmpty()) {
+                        JSONObject json = new JSONObject(fraudRule.getMetadata());
+                        windowSize = json.optInt("windowSize", windowSize);
+                        multiplier = BigDecimal.valueOf(json.optDouble("multiplier", multiplier.doubleValue()));
+                        if(multiplier.compareTo(profile.getMultiplier()) != 0) {
+                            profile.setMultiplier(multiplier);
+                        }
+                    }
+                    BigDecimal txAmount = transaction.getTransactionAmount();
+                    BigDecimal dynamicThreshold = profile.getAvgAmount().multiply(multiplier);
+                    if(dynamicThreshold.compareTo(minThreshold) < 0) {
+                        dynamicThreshold = minThreshold;
+                    }
+                    boolean isSuspicious = txAmount.compareTo(dynamicThreshold) > 0;
+
+                    userProfileService.updatedAverageAmount(profile, txAmount, windowSize);
+                    return isSuspicious;
                 }
                 break;
 
             case VELOCITY:
-                if(fraudRule.getMetadata()==null){
-                    return false;
-                }
-                try{
-                    JSONObject jsonObject=new JSONObject(fraudRule.getMetadata());
-                    int maxCount=jsonObject.optInt("maxCount",0);
-                    int windowSeconds=jsonObject.optInt("windowSeconds",0);
+                UserRuleProfile userRuleProfile = userProfileService.getOrCreateProfile(transaction.getUser(), fraudRule);
 
-                    if(maxCount<=0 || windowSeconds<=0){
-                        return false;
+                long now = transaction.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+
+                long count = last5.stream()
+                        .filter(tx -> {
+                            long txTime = tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+                            return (now - txTime) <= 3600; // could replace 3600 with a dynamic window
+                        })
+                        .count();
+
+                boolean isFraud = count >= userRuleProfile.getDynamicThreshold();
+
+                userProfileService.updatedTxCount(userRuleProfile, (int) count);
+                userProfileService.updatedAverageAmount(userRuleProfile, transaction.getTransactionAmount(), last5.size() + 1);
+
+                if(fraudRule.getMetadata() != null){
+                    try {
+                        JSONObject jsonObject = new JSONObject(fraudRule.getMetadata());
+                        int maxCount = jsonObject.optInt("maxCount", 0);
+                        int windowSeconds = jsonObject.optInt("windowSeconds", 0);
+
+                        if(maxCount > 0 && windowSeconds > 0){
+                            long countStatic = last5.stream()
+                                    .filter(tx -> {
+                                        long txTime = tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
+                                        return (now - txTime) <= windowSeconds;
+                                    }).count();
+
+                            isFraud = isFraud || countStatic >= maxCount;
+                        }
+                    } catch (Exception ignored) {
+                        System.err.print(ignored);
                     }
-                    long now=transaction.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
-
-                    long count=last5.stream().filter(tx->{
-                                long txTime=tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
-
-                                return (now-txTime)<=windowSeconds;
-                            })
-                            .count();
-
-                    return count>=maxCount;
-                }catch (Exception e){
-                    return false;
                 }
-
+                userProfileService.updatedTxCount(userRuleProfile, (int) count);
+                userProfileService.updatedAverageAmount(userRuleProfile, transaction.getTransactionAmount(), last5.size() + 1);
+                return isFraud;
 
             case LOCATION:
                 boolean validLocation=last5.stream()

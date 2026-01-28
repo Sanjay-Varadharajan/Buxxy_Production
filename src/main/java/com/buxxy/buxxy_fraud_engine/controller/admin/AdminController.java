@@ -52,7 +52,6 @@ public class AdminController {
                                               sort = "auditedOn",
                                               direction = Sort.Direction.DESC
                                       )Pageable pageable){
-
         Page<AuditLogResponseDTO> auditLog=adminService.viewAllLogs(principal,pageable);
         return ResponseEntity.ok(auditLog);
     }
