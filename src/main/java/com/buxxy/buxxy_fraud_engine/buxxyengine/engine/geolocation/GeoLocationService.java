@@ -37,4 +37,19 @@
             }
         }
 
-    }
+        public double[] getLatitudeAndLongitude(String ip){
+            try {
+                InetAddress inetAddress = InetAddress.getByName(ip);
+                CityResponse cityResponse = dbReader.city(inetAddress);
+                if (cityResponse.location() != null) {
+                    double latitude = cityResponse.location().latitude();
+                    double longitude = cityResponse.location().longitude();
+                    return new double[]{latitude, latitude};
+                }
+            }
+                catch(Exception e){
+                    System.err.print(e.getStackTrace());
+                }
+            return null;
+        }
+        }

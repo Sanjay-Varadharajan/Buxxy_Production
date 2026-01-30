@@ -59,9 +59,9 @@
                     );
                 }
 
-                if (record.getStatus()==IdempotencyStatus.IN_PROGRESS){
-                    int waited=0;
-                    while (record.getStatus()==IdempotencyStatus.IN_PROGRESS) {
+                    if (record.getStatus()==IdempotencyStatus.IN_PROGRESS){
+                        int waited=0;
+                        while (record.getStatus()==IdempotencyStatus.IN_PROGRESS) {
                         try {
                             Thread.sleep(WAIT_INTERVAL_MS);
                             waited = waited + WAIT_INTERVAL_MS;

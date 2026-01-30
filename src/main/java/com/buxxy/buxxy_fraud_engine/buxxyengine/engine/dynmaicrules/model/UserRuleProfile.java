@@ -1,12 +1,12 @@
 package com.buxxy.buxxy_fraud_engine.buxxyengine.engine.dynmaicrules.model;
 
-import com.buxxy.buxxy_fraud_engine.model.FraudRules;
-import com.buxxy.buxxy_fraud_engine.model.User;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.List;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,19 +22,16 @@ public class UserRuleProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userRuleId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User userId;
+    private long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_id")
-    private FraudRules ruleId;
+    private long ruleId;
 
     private BigDecimal avgAmount;
 
     private Integer txCountPerHour;
 
-    private String usualCountries;
 
     private Integer deviceCount;
 
@@ -45,4 +42,13 @@ public class UserRuleProfile {
     private BigDecimal multiplier;
 
     private LocalDateTime updatedOn;
+
+    private String homeCountry;
+
+    private String homeCity;
+
+    private List<String> usualTransactionCountries;
+
+    private List<String> usualTransactionCities;
+
 }

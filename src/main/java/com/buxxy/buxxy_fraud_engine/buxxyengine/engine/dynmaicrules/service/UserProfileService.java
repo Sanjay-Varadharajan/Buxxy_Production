@@ -11,6 +11,7 @@
 
     import java.math.BigDecimal;
     import java.time.LocalDateTime;
+    import java.util.ArrayList;
 
 
     @Service
@@ -20,7 +21,7 @@
         private final UserRuleProfileRepository userRuleProfileRepository;
 
         public UserRuleProfile getOrCreateProfile(User user, FraudRuleDtoForEngine fraudRules) {
-            return userRuleProfileRepository.findByUserUserIdAndFraudRulesRuleId(user.getUserId(), fraudRules.getRuleId())
+            return userRuleProfileRepository.findByUserIdAndRuleId(user.getUserId(), fraudRules.getRuleId())
                     .orElseGet(() -> {
                         UserRuleProfile userRuleProfile = new UserRuleProfile();
                         userRuleProfile.setUserId(user.getUserId());
@@ -54,5 +55,26 @@
             userRuleProfile.setDynamicThreshold(dynamicLimit);
             userRuleProfile.setUpdatedOn(LocalDateTime.now());
             userRuleProfileRepository.save(userRuleProfile);
+        }
+
+        public void updateUsual(UserRuleProfile profile,String country,String city){
+            if (profile.getUsualTransactionCountries()==null){
+                profile.setUsualTransactionCountries(new ArrayList<>());
+            }
+            if (profile.getUsualTransactionCities()==null){
+                profile.setUsualTransactionCities(new ArrayList<>());
+            }
+
+            if(!profile.getUsualTransactionCountries().stream()
+                    .anyMatch(c->c.equalsIgnoreCase(country))){
+                profile.getUsualTransactionCountries().add(country);
+            }
+            if (!profile.getUsualTransactionCities().stream()
+                    .anyMatch(c -> c.equalsIgnoreCase(city))) {
+                profile.getUsualTransactionCities().add(city);
+            }
+
+            profile.setUpdatedOn(LocalDateTime.now());
+            userRuleProfileRepository.save(profile);
         }
     }

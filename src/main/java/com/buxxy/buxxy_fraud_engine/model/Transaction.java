@@ -59,6 +59,9 @@ public class Transaction {
     @OneToOne(mappedBy = "transaction", cascade = CascadeType.ALL)
     private FraudScore fraudScore;
 
+    @Column(length = 45)
+    private String ipAddress;
+
     @PrePersist
     public void persist() {
         if (transactionOn == null) {
