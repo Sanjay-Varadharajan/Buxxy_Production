@@ -24,10 +24,8 @@ Buxxy Fraud Engine
 -Role-based access control
 -OTP integration, because why not
 
-# Why I Made This
--Honestly, I just wanted to build something real. Something I could look at and say, “Yeah, that works.”
--I didn’t bother with a frontend or anything pretty, because I figured if the engine works, people smarter than me can take it and do cooler things.
--Think of it like handing someone LEGO blocks and saying, “Here, build whatever you want.”
+# Why Buxxy?
+Buxxy was initiated to address the rising number of digital transaction frauds. It’s a solo open-source project aimed at helping startups and UPI-based systems detect and prevent fraudulent transactions. By making it open-source, the goal is to allow developers to optimize and integrate it into real-world applications, ensuring safer digital payments for everyone.
 
 # Tech Stuff
 -Java 17
