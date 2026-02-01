@@ -7,6 +7,9 @@ Buxxy Fraud Engine
 
 -I know it’s not perfect, probably has bugs, and there are smarter ways to do some things, but it works. And instead of hiding it in my laptop, I figured I’d throw it out to the open-source world so bigger brains than me can make it better.
 
+# Mission
+Built to make fraud detection accessible to startups by providing a free, extensible rule-based fraud engine for digital payments.
+
 # The Stuff It Does
 # Fraud Rules
 -Flags weird transaction timing—like if someone’s trying to do ten payments in a second
@@ -47,4 +50,7 @@ Buxxy was initiated to address the rising number of digital transaction frauds. 
 # Contribution
 -This is open-source because, honestly, I know there are people out there way smarter than me.
 -Fork it, improve it, add rules, or just learn from it. I’ll happily sit back and watch the bigger brains make it better.
+
+© 2026 Sanjay. Open-source under Apache 2.0 License.
+
 
