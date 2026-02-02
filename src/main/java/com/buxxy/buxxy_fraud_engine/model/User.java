@@ -34,6 +34,10 @@
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long userId;
 
+        @Column(nullable = false, unique = true, updatable = false)
+        private String externalUserId;
+
+
         @NotBlank(message = "UserName is Needed")
         @Column(nullable = false)
         private String userName;

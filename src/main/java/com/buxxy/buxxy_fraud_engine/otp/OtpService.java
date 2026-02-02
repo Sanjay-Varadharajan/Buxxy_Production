@@ -5,6 +5,7 @@ import com.buxxy.buxxy_fraud_engine.enums.Decision;
 import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import com.buxxy.buxxy_fraud_engine.model.*;
 import com.buxxy.buxxy_fraud_engine.repositories.AuditRepository;
+import com.buxxy.buxxy_fraud_engine.repositories.EngineAuditLogRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.OtpRepository;
 import com.buxxy.buxxy_fraud_engine.repositories.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,8 @@ public class OtpService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     private final AuditRepository auditRepository;
+
+    private final EngineAuditLogRepository auditLogForEngineRepository;
 
     public String generateAndSaveOtp(Transaction transaction, User user){
         int otpInt=100000+secureRandom.nextInt(900000);
@@ -71,38 +74,42 @@ public class OtpService {
             return "Transaction already completed or blocked";
 
         boolean valid = validateOtp(transactionId, otp);
-
-        if (valid) {
-            transaction.setTransactionStatus(TransactionStatus.APPROVED);
-            transactionRepository.save(transaction);
-            AuditLog auditLog=new AuditLog();
-            auditLog.setStatus(AuditStatus.SUCCESS);
-            auditLog.setAction("otp Verified And Transaction is Allowed");
-            auditLog.setUser(transaction.getUser());
-            auditRepository.save(auditLog);
-            AuditLogForEngine auditLogForEngine=new AuditLogForEngine();
-            auditLogForEngine.setStatus(TransactionStatus.APPROVED);
-            auditLogForEngine.setDecision(Decision.ALLOW);
-            auditLogForEngine.setTransaction(transaction);
-            auditLogForEngine.setUser(transaction.getUser());
-            return "OTP verified. Transaction completed successfully.";
-        } else {
-            transaction.setTransactionStatus(TransactionStatus.BLOCKED);
-            transaction.setTransactionAmount(null);
-            transaction.setTransactionLocation(null);
-            transactionRepository.save(transaction);
-            AuditLog auditLog=new AuditLog();
-            auditLog.setUser(transaction.getUser());
-            auditLog.setAction("otp verification failed and transaction is blocked");
-            auditLog.setStatus(AuditStatus.FAILURE);
-            auditRepository.save(auditLog);
-            AuditLogForEngine auditLogForEngine=new AuditLogForEngine();
-            auditLogForEngine.setUser(transaction.getUser());
-            auditLogForEngine.setTransaction(transaction);
-            auditLogForEngine.setStatus(TransactionStatus.BLOCKED);
-            auditLogForEngine.setDecision(Decision.BLOCK);
-            return "Invalid or expired OTP. Transaction blocked.";
+        return valid ? handleOtpSuccess(transaction) : handleOtpFailure(transaction);
         }
+
+    private String handleOtpSuccess(Transaction txn) {
+        txn.setTransactionStatus(TransactionStatus.APPROVED);
+        transactionRepository.save(txn);
+
+        logAudit(txn ,"OTP verified. Transaction allowed.", AuditStatus.SUCCESS, TransactionStatus.APPROVED, Decision.ALLOW);
+
+        return "OTP verified. Transaction completed successfully.";
     }
 
-}
+    private String handleOtpFailure(Transaction txn) {
+        txn.setTransactionStatus(TransactionStatus.BLOCKED);
+        txn.setTransactionAmount(null);
+        transactionRepository.save(txn);
+
+        logAudit(txn, "OTP verification failed. Transaction blocked.", AuditStatus.FAILURE, TransactionStatus.BLOCKED, Decision.BLOCK);
+
+        return "Invalid or expired OTP. Transaction blocked.";
+    }
+
+    private void logAudit(Transaction txn, String action, AuditStatus status, TransactionStatus txnStatus, Decision decision) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setUser(txn.getUser());
+        auditLog.setAction(action);
+        auditLog.setStatus(status);
+        auditRepository.save(auditLog);
+
+        AuditLogForEngine auditLogForEngine = new AuditLogForEngine();
+        auditLogForEngine.setTransaction(txn);
+        auditLogForEngine.setUser(txn.getUser());
+        auditLogForEngine.setStatus(txnStatus);
+        auditLogForEngine.setDecision(decision);
+        auditLog.setAuditedOn(LocalDateTime.now());
+        auditLogForEngineRepository.save(auditLogForEngine);
+    }
+    }
+

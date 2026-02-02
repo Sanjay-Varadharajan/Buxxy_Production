@@ -32,7 +32,6 @@ public class UserRuleProfile {
 
     private Integer txCountPerHour;
 
-
     private Integer deviceCount;
 
     private LocalDateTime lastTxTime;
@@ -43,12 +42,21 @@ public class UserRuleProfile {
 
     private LocalDateTime updatedOn;
 
-    private String homeCountry;
+    @ElementCollection
+    private List<String> homeCountries;
 
-    private String homeCity;
+    @ElementCollection
+    private List<String> homeCities;
 
+    @ElementCollection
+    private List<String> awayCountries;
+
+    @ElementCollection
+    private List<String> awayCities;
+
+    @ElementCollection
     private List<String> usualTransactionCountries;
 
+    @ElementCollection
     private List<String> usualTransactionCities;
-
 }

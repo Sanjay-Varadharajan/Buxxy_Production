@@ -1,6 +1,8 @@
 package com.buxxy.buxxy_fraud_engine.dto.transaction;
 
 import java.math.BigDecimal;
+
+import com.buxxy.buxxy_fraud_engine.enums.TransactionStatus;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,10 +14,24 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TransactionCreateDTO {
+
+    @NotNull(message = "User ID is required")
+    private Long userId;
+
     @NotNull
     @DecimalMin("0.01")
-    private BigDecimal amount;
+    private BigDecimal transactionAmount;
 
     @NotBlank
-    private String location;
+    private String transactionAwayCountry;
+
+    @NotBlank
+    private String transactionAwayCity;
+
+    @NotNull
+    private TransactionStatus transactionStatus;
+
+    private String ipAddress;
+
+
 }

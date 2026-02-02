@@ -39,9 +39,21 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal transactionAmount;
 
-    @NotBlank(message = "Location is Needed")
+    @NotBlank
     @Column(nullable = false)
-    private String transactionLocation;
+    private String transactionHomeCountry;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String transactionHomeCity;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String transactionAwayCountry;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String transactionAwayCity;
 
     @CreatedDate
     @Column(nullable = false)

@@ -12,3 +12,9 @@ Inet Address->used to resolve the host name to their respective ip and vice vers
 ->add personalised rule for users
 transaction->behaviour profile->dynamic threshold->rule engine
 ->next add rule switch and freeze
+
+->systemleveltransactionserivce need to be iterated
+
+->decisionhandling need to be iterated
+
+->otpservice need to be iterated

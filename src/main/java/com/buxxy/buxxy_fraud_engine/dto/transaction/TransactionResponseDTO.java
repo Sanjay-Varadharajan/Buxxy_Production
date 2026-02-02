@@ -18,7 +18,10 @@ public class TransactionResponseDTO {
     private Long transactionId;
     private Long userId;
     private BigDecimal transactionAmount;
-    private String transactionLocation;
+    private String transactionHomeCountry;
+    private String transactionHomeCity;
+    private String transactionAwayCountry;
+    private String transactionAwayCity;
     private LocalDateTime transactionOn;
     private TransactionStatus transactionStatus;
 
@@ -28,10 +31,25 @@ public class TransactionResponseDTO {
         this.transactionId=transactionHistory.getTransactionId();
         this.userId=transactionHistory.getUser().getUserId();
         this.transactionAmount=transactionHistory.getTransactionAmount();
-        this.transactionLocation=transactionHistory.getTransactionLocation();
+        this.setTransactionHomeCountry(transactionHistory.getTransactionHomeCountry());
+        this.setTransactionHomeCity(transactionHistory.getTransactionHomeCity());
+        this.setTransactionAwayCountry(transactionHistory.getTransactionAwayCountry());
+        this.setTransactionAwayCity(transactionHistory.getTransactionAwayCity());
         this.transactionOn=transactionHistory.getTransactionOn();
         this.transactionStatus=transactionHistory.getTransactionStatus();
     }
 
+
+    public TransactionResponseDTO(String status, Long userId, String message) {
+        this.transactionId = null;
+        this.userId = userId;
+        this.transactionAmount = null;
+        this.transactionAwayCountry=null;
+        this.transactionAwayCity=null;
+        this.transactionHomeCity=null;
+        this.transactionHomeCountry=null;
+        this.transactionOn = null;
+        this.transactionStatus = status.equalsIgnoreCase("FAILED") ? TransactionStatus.BLOCKED : null;
+    }
 
 }

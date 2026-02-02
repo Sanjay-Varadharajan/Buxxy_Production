@@ -22,6 +22,8 @@ import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import static com.buxxy.buxxy_fraud_engine.enums.RuleType.TIME_WINDOW;
+
 @Component
 @RequiredArgsConstructor
 public class RuleApplyingService {
@@ -46,26 +48,26 @@ public class RuleApplyingService {
                                 BigDecimal avgAmount,
                                 HttpServletRequest httpServletRequest){
 
-        switch (fraudRule.getRuleType()){
+        switch (fraudRule.getRuleType()) {
             case HIGH_AMOUNT:
-                if(fraudRule.getThreshold()!=null){
-                    UserRuleProfile profile=userProfileService.getOrCreateProfile(transaction.getUser(), fraudRule);
+                if (fraudRule.getThreshold() != null) {
+                    UserRuleProfile profile = userProfileService.getOrCreateProfile(transaction.getUser(), fraudRule);
 
-                    int windowSize=5;
-                    BigDecimal multiplier=profile.getMultiplier() != null ? profile.getMultiplier() : BigDecimal.valueOf(3);
+                    int windowSize = 5;
+                    BigDecimal multiplier = profile.getMultiplier() != null ? profile.getMultiplier() : BigDecimal.valueOf(3);
                     BigDecimal minThreshold = BigDecimal.valueOf(10);
 
-                    if(fraudRule.getMetadata() != null && !fraudRule.getMetadata().isEmpty()) {
+                    if (fraudRule.getMetadata() != null && !fraudRule.getMetadata().isEmpty()) {
                         JSONObject json = new JSONObject(fraudRule.getMetadata());
                         windowSize = json.optInt("windowSize", windowSize);
                         multiplier = BigDecimal.valueOf(json.optDouble("multiplier", multiplier.doubleValue()));
-                        if(multiplier.compareTo(profile.getMultiplier()) != 0) {
+                        if (multiplier.compareTo(profile.getMultiplier()) != 0) {
                             profile.setMultiplier(multiplier);
                         }
                     }
                     BigDecimal txAmount = transaction.getTransactionAmount();
                     BigDecimal dynamicThreshold = profile.getAvgAmount().multiply(multiplier);
-                    if(dynamicThreshold.compareTo(minThreshold) < 0) {
+                    if (dynamicThreshold.compareTo(minThreshold) < 0) {
                         dynamicThreshold = minThreshold;
                     }
                     boolean isSuspicious = txAmount.compareTo(dynamicThreshold) > 0;
@@ -92,13 +94,13 @@ public class RuleApplyingService {
                 userProfileService.updatedTxCount(userRuleProfile, (int) count);
                 userProfileService.updatedAverageAmount(userRuleProfile, transaction.getTransactionAmount(), last5.size() + 1);
 
-                if(fraudRule.getMetadata() != null){
+                if (fraudRule.getMetadata() != null) {
                     try {
                         JSONObject jsonObject = new JSONObject(fraudRule.getMetadata());
                         int maxCount = jsonObject.optInt("maxCount", 0);
                         int windowSeconds = jsonObject.optInt("windowSeconds", 0);
 
-                        if(maxCount > 0 && windowSeconds > 0){
+                        if (maxCount > 0 && windowSeconds > 0) {
                             long countStatic = last5.stream()
                                     .filter(tx -> {
                                         long txTime = tx.getTransactionOn().toEpochSecond(ZoneOffset.UTC);
@@ -116,47 +118,54 @@ public class RuleApplyingService {
                 return isFraud;
 
             case LOCATION:
-                String country=geoLocationService.getCountry(httpServletRequest.getRemoteAddr());
-                String city=geoLocationService.getCity(httpServletRequest.getRemoteAddr());
-                double[] currentLatLon=geoLocationService.getLatitudeAndLongitude(httpServletRequest.getRemoteAddr());
+                UserRuleProfile profile = userProfileService.getOrCreateProfile(transaction.getUser(), fraudRule);
 
-                UserRuleProfile profile=userProfileService.getOrCreateProfile(transaction.getUser(),fraudRule);
 
-                boolean usualCountry=profile.getUsualTransactionCountries()==null ||
+                String homeCountry = geoLocationService.getCountry(transaction.getIpAddress());
+                String homeCity = geoLocationService.getCity(transaction.getIpAddress());
+                double[] currentLatLon = geoLocationService.getLatitudeAndLongitude(transaction.getIpAddress());
+
+
+                boolean unusualHomeCountry = profile.getUsualTransactionCountries() == null ||
                         profile.getUsualTransactionCountries()
-                                .stream().noneMatch(c->c.equalsIgnoreCase(country));
+                                .stream().noneMatch(c -> c.equalsIgnoreCase(homeCountry));
 
-                boolean usualCity=profile.getUsualTransactionCities()==null ||
+                boolean unusualHomeCity = profile.getUsualTransactionCities() == null ||
                         profile.getUsualTransactionCities()
-                                .stream().noneMatch(ci->ci.equalsIgnoreCase(city));
+                                .stream().noneMatch(ci -> ci.equalsIgnoreCase(homeCity));
 
-                boolean newCity=last5.stream()
-                        .map(tx->tx.getTransactionLocation())
-                        .filter(loc->loc!=null)
-                        .noneMatch(loc->loc.equalsIgnoreCase(city));
+                boolean unusualAwayCountry = profile.getAwayCountries() == null ||
+                        profile.getAwayCountries().stream().noneMatch(c -> c.equalsIgnoreCase(homeCountry));
+                boolean unusualAwayCity = profile.getAwayCities() == null ||
+                        profile.getAwayCities().stream().noneMatch(c -> c.equalsIgnoreCase(homeCity));
 
-                boolean impossibleTravel=false;
+                boolean newCity = last5.stream()
+                        .map(tx -> geoLocationService.getCity(tx.getIpAddress()))
+                        .filter(loc -> loc != null)
+                        .noneMatch(loc -> loc.equalsIgnoreCase(homeCity));
 
-                if(currentLatLon!=null && !last5.isEmpty()){
-                    Transaction lastTx=last5.get(last5.size()-1);
-                    double[] lastLatLon=geoLocationService.getLatitudeAndLongitude(lastTx.getIpAddress());
-                    if (lastLatLon!=null){
-                        long secondDiff=java.time.Duration.between(lastTx.getTransactionOn(),transaction.getTransactionOn()).getSeconds();
-                        if (secondDiff>0){
-                            double distanceKm= calculateDistance.distanceKm(
-                                    lastLatLon[0],lastLatLon[1],
-                                    currentLatLon[0],currentLatLon[1]
+                boolean impossibleTravel = false;
+
+                if (!last5.isEmpty()) {
+                    Transaction lastTnx = last5.get(last5.size() - 1);
+                    double[] lastLatLon = geoLocationService.getLatitudeAndLongitude(lastTnx.getIpAddress());
+                    if (lastLatLon != null && currentLatLon != null) {
+                        long secondDiff = java.time.Duration.between(lastTnx.getTransactionOn(), transaction.getTransactionOn()).getSeconds();
+                        if (secondDiff > 0) {
+                            double distanceKm = calculateDistance.distanceKm(
+                                    lastLatLon[0], lastLatLon[1],
+                                    currentLatLon[0], currentLatLon[1]
                             );
-
-                            double speedKmh=distanceKm/(secondDiff/3600.0);
-                            impossibleTravel=speedKmh>1000;
+                            double speedKmh = distanceKm / (secondDiff / 3600.0);
+                            impossibleTravel = speedKmh > 1000;
                         }
                     }
                 }
+                    userProfileService.updateUsual(profile, homeCountry, homeCity);
 
-                userProfileService.updateUsual(profile,country,city);
+                    return unusualAwayCity || unusualAwayCountry || unusualHomeCity || unusualHomeCountry || newCity || impossibleTravel;
 
-                return usualCountry || usualCity|| newCity || impossibleTravel;
+
             case TIME_WINDOW:
                 try {
                     List<Transaction> recentTx = last5.stream()
