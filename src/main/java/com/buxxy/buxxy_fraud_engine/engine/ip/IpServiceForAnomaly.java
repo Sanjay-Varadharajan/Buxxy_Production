@@ -4,7 +4,6 @@ import com.buxxy.buxxy_fraud_engine.engine.device.service.DeviceFingerPrintServi
 import com.buxxy.buxxy_fraud_engine.engine.location.geolocation.service.GeoLocationService;
 import com.buxxy.buxxy_fraud_engine.engine.device.deviceIphistory.model.DeviceIpHistory;
 import com.buxxy.buxxy_fraud_engine.engine.device.deviceIphistory.repository.DeviceIPHistoryRepository;
-import com.buxxy.buxxy_fraud_engine.transaction.repository.TransactionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
