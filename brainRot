@@ -12,9 +12,50 @@ Inet Address->used to resolve the host name to their respective ip and vice vers
 ->add personalised rule for users
 transaction->behaviour profile->dynamic threshold->rule engine
 ->next add rule switch and freeze
+(done)
 
-->systemleveltransactionserivce need to be iterated
+->systemleveltransactionserivce need to be iterated(done)
 
-->decisionhandling need to be iterated
+->decisionhandling need to be iterated(done)
 
-->otpservice need to be iterated
+->otpservice need to be iterated(done)
+
+->systemleveltransactionservice need modification and refraction dont forget it
+
+
+->idempotency execution->
+    private final SystemLevelTransactionService systemLevelTransactionService;
+
+    private final IdempotentService idempotentService;
+
+    private static final Logger logger = LoggerFactory.getLogger(SystemLevelTransactionController.class);
+
+
+    @PostMapping("/transaction/execute")
+    public ResponseEntity<TransactionResponseDTO> executeTransaction(@RequestHeader("idempotency-key") String idempotencyKey,
+                                                                     @Valid @RequestBody TransactionCreateDTO transactionCreateDTO
+    ) {
+
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            TransactionResponseDTO response = idempotentService.executeIdempotent(
+                    idempotencyKey,
+                    transactionCreateDTO,
+                    TransactionResponseDTO.class,
+                    () -> systemLevelTransactionService.executeTransaction(transactionCreateDTO)
+            );
+            logger.info("System transaction executed successfully for idempotency-key: {}", idempotencyKey);
+            return ResponseEntity.ok(response);
+        }
+
+        catch (Exception e) {
+            logger.error("Error executing system transaction: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+}
+
+

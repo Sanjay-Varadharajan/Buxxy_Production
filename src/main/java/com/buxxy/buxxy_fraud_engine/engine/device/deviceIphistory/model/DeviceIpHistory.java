@@ -1,0 +1,41 @@
+package com.buxxy.buxxy_fraud_engine.engine.device.deviceIphistory.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.Instant;
+
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class DeviceIpHistory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long ipHistoryId;
+
+    private long userId;
+
+    private Long deviceId;
+
+    private String ipAddress;
+
+    private String ipCountry;
+
+    private String ipCity;
+
+    private Instant seenAt;
+
+    private boolean isAnomaly;
+
+    private String deviceFingerPrint;
+
+}

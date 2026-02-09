@@ -1,0 +1,14 @@
+package com.buxxy.buxxy_fraud_engine.security.authDto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class LoginResponseDto {
+    private String token;
+}
